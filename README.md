@@ -4,7 +4,7 @@
 
 # OpenWebUI Monitor
 
-**English** / [简体中文](./resources/tutorials/zh-cn/README_zh.md) / [Español](./resources/tutorials/es/README_es.md)
+**English** / [简体中文](./resources/tutorials/zh-cn/README_zh.md) / [Español](./resources/tutorials/es/README_es.md) / [ไทย](./locales/th/common.json)
 
 </div>
 
@@ -14,10 +14,13 @@ A monitoring dashboard for OpenWebUI that tracks usage and manages user balances
 
 ## Features
 
-- Set prices for each model in OpenWebUI;
-- Set balance for each user, deduct based on token consumption and model prices, with notifications at the end of each chat;
-- View user data and visualizations;
-- One-click test for all model availability.
+- **Model Pricing**: Set custom prices for each model in OpenWebUI.
+- **Balance Management**: Set balances for individual users with automatic deduction based on token consumption or per-message rates.
+- **Group Quota**: Assign users to groups with shared quotas. Group quota is consumed first before individual user balances.
+- **Global Quota**: Set a total application-wide quota limit and expiration date to control overall usage.
+- **Usage Reports**: Detailed usage analysis by user and group over specific time periods, with CSV export functionality.
+- **Multi-language Support**: UI available in English, Chinese, Spanish, and Thai.
+- **Model Testing**: One-click availability testing for all configured models.
 
 ## Deployment
 
@@ -52,6 +55,11 @@ sudo docker compose up -d
 | DEFAULT_MODEL_PER_MSG_PRICE | Default model price for each message, in USD                                                                                                | `-1`          |
 | INIT_BALANCE                | Initial user balance                                                                                                                        | `0`           |
 | COST_ON_INLET               | Pre-deduction amount on inlet. Can be a fixed number for all models (e.g. `0.1`), or model-specific format (e.g. `gpt-4:0.32,gpt-3.5:0.01`) | `0`           |
+| GLOBAL_LIMIT_ENABLE         | Enable global quota limit                                                                                                                   | `false`       |
+| GLOBAL_LIMIT_QUOTA          | Total global quota limit                                                                                                                    | `100.0`       |
+| GLOBAL_LIMIT_EXPIRE_DATE    | Global quota expiration date (YYYY-MM-DD)                                                                                                   | `2026-12-31`  |
+| DEFAULT_LANGUAGE            | Default UI language (en, zh, es, th)                                                                                                        | `en`          |
+| USD_TO_THB                  | Currency conversion rate from USD to THB                                                                                                    | `35`          |
 
 ## Function Variable Configuration
 
@@ -59,7 +67,7 @@ sudo docker compose up -d
 | ------------- | -------------------------------------------------------------------------------------------------------------- |
 | Api Endpoint  | Fill in your deployed OpenWebUI Monitor backend domain or IP address accessible within the OpenWebUI container |
 | Api Key       | Fill in the `API_KEY` environment variable set in the backend deployment                                       |
-| Language      | Message display language (en/zh)                                                                               |
+| Language      | Message display language (en/zh/es/th)                                                                         |
 
 ## FAQ
 
