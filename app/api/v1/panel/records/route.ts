@@ -36,11 +36,16 @@ export async function GET(req: Request) {
         }
 
         if (startDate && endDate) {
+            // Adjust dates to include full day only if they are simple YYYY-MM-DD strings
+            const isSimpleDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date)
+            const start = isSimpleDate(startDate) ? `${startDate} 00:00:00` : startDate
+            const end = isSimpleDate(endDate) ? `${endDate} 23:59:59` : endDate
+            
             conditions.push(
                 `use_time >= $${paramIndex} AND use_time <= $${paramIndex + 1}`
             )
-            params.push(startDate)
-            params.push(endDate)
+            params.push(start)
+            params.push(end)
             paramIndex += 2
         }
 
@@ -53,25 +58,27 @@ export async function GET(req: Request) {
 
         const countQuery = `
       SELECT COUNT(*) 
-      FROM user_usage_records 
-      ${whereClause}
+      FROM user_usage_records uur
+      ${whereClause.replace(/nickname/g, 'uur.nickname').replace(/model_name/g, 'uur.model_name').replace(/use_time/g, 'uur.use_time')}
     `
         const countResult = await query(countQuery, params)
 
         const offset = (page - 1) * pageSize
         const dataQuery = `
       SELECT 
-        user_id,
-        nickname,
-        use_time,
-        model_name,
-        input_tokens,
-        output_tokens,
-        cost,
-        balance_after
-      FROM user_usage_records 
-      ${whereClause}
-      ${orderClause}
+        uur.user_id,
+        uur.nickname,
+        uur.use_time,
+        uur.model_name,
+        uur.input_tokens,
+        uur.output_tokens,
+        uur.cost,
+        uur.balance_after,
+        t.source as group_name
+      FROM user_usage_records uur
+      LEFT JOIN transactions t ON uur.id = t.record_id
+      ${whereClause.replace(/nickname/g, 'uur.nickname').replace(/model_name/g, 'uur.model_name').replace(/use_time/g, 'uur.use_time')}
+      ${orderClause.replace(/use_time/g, 'uur.use_time').replace(/nickname/g, 'uur.nickname').replace(/model_name/g, 'uur.model_name').replace(/cost/g, 'uur.cost').replace(/balance_after/g, 'uur.balance_after')}
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `
 

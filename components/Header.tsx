@@ -77,6 +77,12 @@ export default function Header() {
                                         onClick: () =>
                                             handleLanguageChange('es'),
                                     },
+                                    {
+                                        key: 'th',
+                                        label: 'ไทย',
+                                        onClick: () =>
+                                            handleLanguageChange('th'),
+                                    },
                                 ],
                                 selectedKeys: [i18n.language],
                             }}
@@ -89,7 +95,9 @@ export default function Header() {
                                         ? t('header.language.zh')
                                         : i18n.language === 'es'
                                           ? t('header.language.es')
-                                          : t('header.language.en')}
+                                          : i18n.language === 'th'
+                                            ? t('header.language.th')
+                                            : t('header.language.en')}
                                 </span>
                                 <ChevronDown className="w-3 h-3 text-gray-600 group-hover:text-blue-500 transition-colors" />
                             </button>
@@ -287,6 +295,20 @@ export default function Header() {
             color: 'from-emerald-500/10 to-teal-500/10',
             hoverColor: 'group-hover:text-emerald-600',
         },
+        {
+            path: '/groups',
+            icon: <FiUsers className="w-5 h-5" />,
+            label: t('home.features.groups.title'),
+            color: 'from-purple-500/10 to-indigo-500/10',
+            hoverColor: 'group-hover:text-purple-600',
+        },
+        {
+            path: '/reports',
+            icon: <FiBarChart2 className="w-5 h-5" />,
+            label: t('home.features.reports.title'),
+            color: 'from-orange-500/10 to-amber-500/10',
+            hoverColor: 'group-hover:text-orange-600',
+        },
     ]
 
     const settingsItems = [
@@ -369,6 +391,11 @@ export default function Header() {
                             key: 'es',
                             label: 'Español',
                             onClick: () => handleLanguageChange('es'),
+                        },
+                        {
+                            key: 'th',
+                            label: 'ไทย',
+                            onClick: () => handleLanguageChange('th'),
                         },
                     ],
                     selectedKeys: [i18n.language],

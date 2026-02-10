@@ -15,6 +15,7 @@ interface UsageRecord {
     output_tokens: number
     cost: number
     balance_after: number
+    group_name?: string
 }
 
 interface TableParams {
@@ -58,10 +59,10 @@ const MobileCard = ({
                 </div>
                 <div className="text-right">
                     <div className="font-medium text-primary">
-                        ¥{Number(record.cost).toFixed(4)}
+                        {t('common.currency')}{Number(record.cost).toFixed(4)}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                        {t('panel.usageDetails.table.balance')}: ¥
+                        {t('panel.usageDetails.table.balance')}: {t('common.currency')}
                         {Number(record.balance_after).toFixed(4)}
                     </div>
                 </div>
@@ -156,6 +157,16 @@ export default function UsageRecordsTable({
             sorter: true,
             render: (_: unknown, record: UsageRecord) =>
                 (record.input_tokens + record.output_tokens).toLocaleString(),
+        },
+        {
+            title: t('panel.usageDetails.table.costType'),
+            dataIndex: 'group_name',
+            key: 'group_name',
+            width: 120,
+            render: (groupName: string) =>
+                groupName && groupName.trim() !== ''
+                    ? groupName
+                    : t('panel.report.personal'),
         },
         {
             title: t('panel.usageDetails.table.cost'),

@@ -120,45 +120,127 @@ export async function POST(req: Request) {
 
         const inletCost = getModelInletCost(modelId)
 
-        const actualCost = totalCost - inletCost
+        const actualCost = totalCost + inletCost
 
-        const userResult = await query(
-            `UPDATE users 
-       SET balance = LEAST(
-         balance - CAST($1 AS DECIMAL(16,4)),
-         999999.9999
-       )
-       WHERE id = $2
-       RETURNING balance`,
-            [actualCost, userId]
+        // Check if user belongs to a group
+        const groupMapping = await query(
+            'SELECT g.* FROM groups g JOIN user_group_mapping ugm ON g.id = ugm.group_id WHERE ugm.user_id = $1',
+            [userId]
         )
+        const group = groupMapping.rows[0]
 
-        if (userResult.rows.length === 0) {
-            throw new Error('User does not exist')
+        let newBalance: number
+        let source = 'personal'
+        let transactionId: number | null = null
+
+        if (group) {
+            // 1. Try to deduct from group first
+            const groupResult = await query(
+                `UPDATE groups 
+                 SET balance = balance - CAST($1 AS DECIMAL(16,4))
+                 WHERE id = $2 AND balance >= $1
+                 RETURNING balance`,
+                [actualCost, group.id]
+            )
+
+            if (groupResult.rows.length > 0) {
+                newBalance = Number(groupResult.rows[0].balance)
+                source = 'group'
+                
+                // Log transaction
+                const transResult = await query(
+                    `INSERT INTO transactions (user_id, group_id, type, source, amount, model_id)
+                     VALUES ($1, $2, 'USAGE', 'GROUP', $3, $4)
+                     RETURNING id`,
+                    [userId, group.id, -actualCost, modelId]
+                )
+                transactionId = transResult.rows[0].id
+            } else {
+                // Fallback to personal balance
+                const userResult = await query(
+                    `UPDATE users 
+                     SET balance = balance - CAST($1 AS DECIMAL(16,4))
+                     WHERE id = $2 AND NOT deleted AND balance >= $1
+                     RETURNING balance`,
+                    [actualCost, userId]
+                )
+
+                if (userResult.rows.length === 0) {
+                    throw new Error('Insufficient balance (both group and personal)')
+                }
+                newBalance = Number(userResult.rows[0].balance)
+                
+                // Log transaction
+                const transResult = await query(
+                    `INSERT INTO transactions (user_id, type, source, amount, model_id)
+                     VALUES ($1, 'USAGE', 'PERSONAL', $2, $3)
+                     RETURNING id`,
+                    [userId, -actualCost, modelId]
+                )
+                transactionId = transResult.rows[0].id
+            }
+        } else {
+            // No group, deduct from personal balance
+            const userResult = await query(
+                `UPDATE users 
+                 SET balance = balance - CAST($1 AS DECIMAL(16,4))
+                 WHERE id = $2 AND NOT deleted
+                 RETURNING balance`,
+                [actualCost, userId]
+            )
+
+            if (userResult.rows.length === 0) {
+                throw new Error('User does not exist or insufficient balance')
+            }
+            newBalance = Number(userResult.rows[0].balance)
+
+            // Log transaction
+            const transResult = await query(
+                `INSERT INTO transactions (user_id, type, source, amount, model_id)
+                 VALUES ($1, 'USAGE', 'PERSONAL', $2, $3)
+                 RETURNING id`,
+                [userId, -actualCost, modelId]
+            )
+            transactionId = transResult.rows[0].id
         }
-
-        const newBalance = Number(userResult.rows[0].balance)
 
         if (newBalance > 999999.9999) {
             throw new Error('Balance exceeds maximum allowed value')
         }
 
-        await query(
+        const usageRecordResult = await query(
             `INSERT INTO user_usage_records (
         user_id, nickname, model_name, 
         input_tokens, output_tokens, 
         cost, balance_after
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id`,
             [
                 userId,
                 userName,
                 modelId,
                 inputTokens,
                 outputTokens,
-                totalCost,
+                actualCost,
                 newBalance,
             ]
         )
+
+        const recordId = usageRecordResult.rows[0].id
+
+        // Update global usage total
+        await query(
+            "UPDATE system_stats SET value_decimal = value_decimal + CAST($1 AS DECIMAL(16,4)), updated_at = CURRENT_TIMESTAMP WHERE key = 'global_usage_total'",
+            [actualCost]
+        )
+
+        // Update transaction with record_id
+        if (transactionId) {
+            await query(
+                `UPDATE transactions SET record_id = $1 WHERE id = $2`,
+                [recordId, transactionId]
+            )
+        }
 
         await query('COMMIT')
 
@@ -167,7 +249,7 @@ export async function POST(req: Request) {
                 success: true,
                 inputTokens,
                 outputTokens,
-                totalCost,
+                actualCost,
                 newBalance,
                 message: 'Request successful',
             })
@@ -177,8 +259,9 @@ export async function POST(req: Request) {
             success: true,
             inputTokens,
             outputTokens,
-            totalCost,
+            actualCost,
             newBalance,
+            source,
             message: 'Request successful',
         })
     } catch (error) {

@@ -11,14 +11,15 @@
         "delete": "删除",
         "close": "关闭",
         "back": "返回",
-        "currency": "¥",
+        "currency": "$",
         "count": "次",
         "total": "总计",
         "prev": "上一页",
         "next": "下一页",
         "page": "页",
         "notSet": "未设置",
-        "enterValue": "请输入"
+        "enterValue": "请输入",
+        "dateFormat": "YYYY-MM-DD"
     },
 
     "auth": {
@@ -77,6 +78,14 @@
             "stats": {
                 "title": "使用统计",
                 "description": "使用统计数据和可视化"
+            },
+            "groups": {
+                "title": "分组管理",
+                "description": "OpenWebUI 提供分组管理"
+            },
+            "reports": {
+                "title": "用量报告",
+                "description": "查看详细的用量报告"
             }
         }
     },
@@ -280,7 +289,8 @@
                 "model": "模型",
                 "tokens": "Tokens",
                 "cost": "费用",
-                "balance": "余额"
+                "balance": "余额",
+                "costType": "扣费类型"
             }
         },
         "description": "查看模型使用情况、用户消费数据和详细使用记录。",
@@ -301,7 +311,18 @@
             "mostUsedModel": "最常用模型",
             "topUser": "最活跃用户",
             "usageCount": "使用 {{count}} 次",
-            "spentAmount": "消费 ¥{{amount}}"
+            "spentAmount": "消费 ${{amount}}",
+            "personal": "个人",
+            "group": "分组",
+            "unknown": "未知"
+        },
+        "globalQuota": {
+            "status": "全局配额状态",
+            "total": "总配额",
+            "used": "已使用",
+            "remaining": "剩余",
+            "expireDate": "过期时间",
+            "noLimit": "无限制"
         }
     },
     "error": {
@@ -334,5 +355,42 @@
         },
         "exceedsMaxValue": "输入值不能超过 {{max}}",
         "balanceExceedsLimit": "余额超出最大限制"
+    },
+    "groups": {
+        "title": "分组管理",
+        "description": "管理用户分组并设置告警阈值。",
+        "add": "添加分组",
+        "edit": "编辑分组",
+        "id": "分组 ID",
+        "name": "分组名称",
+        "adminEmail": "管理员邮箱",
+        "alertThreshold": "告警阈值 ($)",
+        "manageMembers": "成员管理",
+        "manageMembersDesc": "将用户添加到此分组。一个用户只能属于一个分组。",
+        "addToGroup": "添加到分组",
+        "deleteConfirm": {
+            "title": "确定要删除这个分组吗？"
+        },
+        "message": {
+            "fetchError": "获取分组失败",
+            "saveSuccess": "分组保存成功",
+            "saveError": "保存分组失败",
+            "deleteSuccess": "分组删除成功",
+            "deleteError": "删除分组失败",
+            "assignSuccess": "用户已分配到分组",
+            "assignError": "分配用户失败"
+        }
+    },
+    "reports": {
+        "title": "用量报告",
+        "exportCsv": "导出 CSV",
+        "type": "报告类型",
+        "userReport": "用户报告",
+        "groupReport": "分组报告",
+        "totalTokensPeriod": "时段内总 Token",
+        "totalUsagePeriod": "时段内总消耗",
+        "totalTopupPeriod": "时段内总充值",
+        "netChange": "净变化",
+        "usageDetails": "使用详情"
     }
 }

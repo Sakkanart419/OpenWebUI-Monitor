@@ -18,7 +18,8 @@
         "next": "Siguiente",
         "page": "Página",
         "notSet": "No Establecido",
-        "enterValue": "Ingrese Valor"
+        "enterValue": "Ingrese Valor",
+        "dateFormat": "YYYY-MM-DD"
     },
 
     "auth": {
@@ -78,6 +79,14 @@
             "stats": {
                 "title": "Uso",
                 "description": "Estadísticas y Visualización"
+            },
+            "groups": {
+                "title": "Grupo",
+                "description": "Gestión de Grupos"
+            },
+            "reports": {
+                "title": "Informe",
+                "description": "Informes de Uso"
             }
         }
     },
@@ -281,7 +290,8 @@
                 "model": "Modelo",
                 "tokens": "Tokens",
                 "cost": "Costo",
-                "balance": "Saldo"
+                "balance": "Saldo",
+                "costType": "Tipo de Costo"
             }
         },
         "description": "Vea el uso de modelos, datos de consumo de usuarios y registros de uso detallados.",
@@ -302,7 +312,18 @@
             "mostUsedModel": "Modelo Más Usado",
             "topUser": "Usuario Principal",
             "usageCount": "{{count}} veces",
-            "spentAmount": "${{amount}} gastado"
+            "spentAmount": "${{amount}} gastado",
+            "personal": "Personal",
+            "group": "Grupo",
+            "unknown": "DESCONOCIDO"
+        },
+        "globalQuota": {
+            "status": "Estado de Cuota Global",
+            "total": "Cuota Total",
+            "used": "Usado",
+            "remaining": "Restante",
+            "expireDate": "Fecha de Expiración",
+            "noLimit": "Sin Límite"
         }
     },
     "error": {
@@ -335,5 +356,42 @@
         },
         "exceedsMaxValue": "El valor ingresado no puede exceder {{max}}",
         "balanceExceedsLimit": "El saldo excede el límite máximo"
+    },
+    "groups": {
+        "title": "Gestión de Grupos",
+        "description": "Gestione grupos de usuarios y establezca umbrales de alerta.",
+        "add": "Agregar Grupo",
+        "edit": "Editar Grupo",
+        "id": "ID de Grupo",
+        "name": "Nombre del Grupo",
+        "adminEmail": "Correo del Administrador",
+        "alertThreshold": "Umbral de Alerta ($)",
+        "manageMembers": "Gestionar Miembros",
+        "manageMembersDesc": "Agregue usuarios a este grupo. Un usuario solo puede pertenecer a un grupo.",
+        "addToGroup": "Agregar al Grupo",
+        "deleteConfirm": {
+            "title": "¿Está seguro de que desea eliminar este grupo?"
+        },
+        "message": {
+            "fetchError": "Error al obtener grupos",
+            "saveSuccess": "Grupo guardado exitosamente",
+            "saveError": "Error al guardar grupo",
+            "deleteSuccess": "Grupo eliminado exitosamente",
+            "deleteError": "Error al eliminar grupo",
+            "assignSuccess": "Usuario asignado al grupo",
+            "assignError": "Error al asignar usuario"
+        }
+    },
+    "reports": {
+        "title": "Informes de Uso",
+        "exportCsv": "Exportar CSV",
+        "type": "Tipo de Informe",
+        "userReport": "Informe de Usuario",
+        "groupReport": "Informe de Grupo",
+        "totalTokensPeriod": "Tokens Totales en el Período",
+        "totalUsagePeriod": "Uso Total en el Período",
+        "totalTopupPeriod": "Recarga Total en el Período",
+        "netChange": "Cambio Neto",
+        "usageDetails": "Detalles de Uso"
     }
 }

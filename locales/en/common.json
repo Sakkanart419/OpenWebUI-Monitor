@@ -18,7 +18,8 @@
         "next": "Next",
         "page": "Page",
         "notSet": "Not Set",
-        "enterValue": "Enter Value"
+        "enterValue": "Enter Value",
+        "dateFormat": "YYYY-MM-DD"
     },
 
     "auth": {
@@ -77,6 +78,14 @@
             "stats": {
                 "title": "Usage",
                 "description": "Statistics & Visualization"
+            },
+            "groups": {
+                "title": "Group",
+                "description": "Group Management"
+            },
+            "reports": {
+                "title": "Report",
+                "description": "Usage Reports"
             }
         }
     },
@@ -156,6 +165,7 @@
                 "success": "Balance updated successfully",
                 "error": "Failed to update balance"
             },
+            "updateGroupSuccess": "Group Update Success",
             "fetchUsersError": "Failed to fetch user list",
             "invalidNumber": "Please enter a valid number",
             "deleteSuccess": "User deleted successfully",
@@ -280,7 +290,8 @@
                 "model": "Model",
                 "tokens": "Tokens",
                 "cost": "Cost",
-                "balance": "Balance"
+                "balance": "Balance",
+                "costType": "Cost Type"
             }
         },
         "description": "View model usage, user consumption data and detailed usage records.",
@@ -301,7 +312,18 @@
             "mostUsedModel": "Most Used Model",
             "topUser": "Top User",
             "usageCount": "{{count}} times",
-            "spentAmount": "${{amount}} spent"
+            "spentAmount": "${{amount}} spent",
+            "personal": "Personal",
+            "group": "Group",
+            "unknown": "UNKNOWN"
+        },
+        "globalQuota": {
+            "status": "Global Quota Status",
+            "total": "Total Quota",
+            "used": "Used",
+            "remaining": "Remaining",
+            "expireDate": "Expire Date",
+            "noLimit": "No Limit"
         }
     },
     "error": {
@@ -332,5 +354,42 @@
             "usageRecord": "Usage record",
             "exportRecord": "Export record"
         }
+    },
+    "groups": {
+        "title": "Group Management",
+        "description": "Manage user groups and set alert thresholds.",
+        "add": "Add Group",
+        "edit": "Edit Group",
+        "id": "Group ID",
+        "name": "Group Name",
+        "adminEmail": "Admin Email",
+        "alertThreshold": "Alert Threshold ($)",
+        "manageMembers": "Manage Members",
+        "manageMembersDesc": "Add users to this group. A user can only belong to one group.",
+        "addToGroup": "Add to Group",
+        "deleteConfirm": {
+            "title": "Are you sure you want to delete this group?"
+        },
+        "message": {
+            "fetchError": "Failed to fetch groups",
+            "saveSuccess": "Group saved successfully",
+            "saveError": "Failed to save group",
+            "deleteSuccess": "Group deleted successfully",
+            "deleteError": "Failed to delete group",
+            "assignSuccess": "User assigned to group",
+            "assignError": "Failed to assign user"
+        }
+    },
+    "reports": {
+        "title": "Usage Reports",
+        "exportCsv": "Export CSV",
+        "type": "Report Type",
+        "userReport": "User Report",
+        "groupReport": "Group Report",
+        "totalTokensPeriod": "Total Tokens in Period",
+        "totalUsagePeriod": "Total Usage in Period",
+        "totalTopupPeriod": "Total Top-up in Period",
+        "netChange": "Net Change",
+        "usageDetails": "Usage Details"
     }
 }

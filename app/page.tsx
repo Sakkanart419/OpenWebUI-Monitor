@@ -155,6 +155,34 @@ export default function HomePage() {
                                         borderColor: 'border-emerald-200/20',
                                         iconColor: 'text-emerald-500/70',
                                     },
+                                    {
+                                        path: '/groups',
+                                        icon: <FiUsers className="w-6 h-6" />,
+                                        title: t('home.features.groups.title'),
+                                        desc: t(
+                                            'home.features.groups.description'
+                                        ),
+                                        gradient:
+                                            'from-purple-500/80 to-indigo-500/80',
+                                        lightColor: 'bg-purple-50/50',
+                                        borderColor: 'border-purple-200/20',
+                                        iconColor: 'text-purple-500/70',
+                                    },
+                                    {
+                                        path: '/reports',
+                                        icon: (
+                                            <FiBarChart2 className="w-6 h-6" />
+                                        ),
+                                        title: t('home.features.reports.title'),
+                                        desc: t(
+                                            'home.features.reports.description'
+                                        ),
+                                        gradient:
+                                            'from-orange-500/80 to-amber-500/80',
+                                        lightColor: 'bg-orange-50/50',
+                                        borderColor: 'border-orange-200/20',
+                                        iconColor: 'text-orange-500/70',
+                                    },
                                 ].map((item, index) => (
                                     <Link
                                         key={item.path}

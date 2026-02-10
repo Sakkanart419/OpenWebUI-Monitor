@@ -5,6 +5,33 @@ import { getModelInletCost } from '@/lib/utils/inlet-cost'
 
 export async function POST(req: Request) {
     try {
+        // Global Quota Check
+        const globalLimitEnable = process.env.GLOBAL_LIMIT_ENABLE === 'true'
+        if (globalLimitEnable) {
+            const globalLimitQuota = parseFloat(process.env.GLOBAL_LIMIT_QUOTA || '0')
+            const globalLimitExpireDate = process.env.GLOBAL_LIMIT_EXPIRE_DATE
+
+            // Check Expiration
+            if (globalLimitExpireDate) {
+                const expireDate = new Date(globalLimitExpireDate)
+                if (new Date() > expireDate) {
+                    throw new Error('Insufficient fund (Global quota expired)')
+                }
+            }
+
+            // Check Quota
+            const globalUsageResult = await query(
+                "SELECT value_decimal FROM system_stats WHERE key = 'global_usage_total'"
+            )
+            const currentGlobalUsage = parseFloat(
+                globalUsageResult.rows[0]?.value_decimal || '0'
+            )
+
+            if (currentGlobalUsage >= globalLimitQuota) {
+                throw new Error('Insufficient fund (Global quota exceeded)')
+            }
+        }
+
         const data = await req.json()
         const user = await getOrCreateUser(data.user)
         const modelId = data.body?.model
@@ -17,35 +44,47 @@ export async function POST(req: Request) {
             })
         }
 
+        // Check if user belongs to a group
+        const groupMapping = await query(
+            'SELECT g.* FROM groups g JOIN user_group_mapping ugm ON g.id = ugm.group_id WHERE ugm.user_id = $1',
+            [user.id]
+        )
+        const group = groupMapping.rows[0]
+
         const inletCost = getModelInletCost(modelId)
 
-        if (inletCost > 0) {
-            const userResult = await query(
-                `UPDATE users 
-         SET balance = LEAST(
-           balance - CAST($1 AS DECIMAL(16,4)),
-           999999.9999
-         )
-         WHERE id = $2 AND NOT deleted
-         RETURNING balance`,
-                [inletCost, user.id]
-            )
+        let finalBalance: number
+        let source: string
 
-            if (userResult.rows.length === 0) {
-                throw new Error('Failed to update user balance')
+        if (group) {
+            // 1. Check group balance first
+            if (Number(group.balance) >= inletCost) {
+                finalBalance = Number(group.balance)
+                source = 'group'
+            } else {
+                // 2. Fallback to check personal balance
+                if (Number(user.balance) >= inletCost) {
+                    finalBalance = Number(user.balance)
+                    source = 'personal'
+                } else {
+                    throw new Error('Insufficient balance (both group and personal)')
+                }
             }
-
-            return NextResponse.json({
-                success: true,
-                balance: Number(userResult.rows[0].balance),
-                inlet_cost: inletCost,
-                message: 'Request successful',
-            })
+        } else {
+            // No group, check personal balance
+            if (Number(user.balance) >= inletCost) {
+                finalBalance = Number(user.balance)
+                source = 'personal'
+            } else {
+                throw new Error('Insufficient balance')
+            }
         }
 
         return NextResponse.json({
             success: true,
-            balance: Number(user.balance),
+            balance: finalBalance,
+            inlet_cost: inletCost,
+            source: source,
             message: 'Request successful',
         })
     } catch (error) {

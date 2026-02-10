@@ -20,11 +20,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Trash2, Search, X, Unlock, Lock } from 'lucide-react'
+import { Trash2, Search, X, Unlock, Lock, Users } from 'lucide-react'
 import { EditableCell } from '@/components/editable-cell'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { toast, Toaster } from 'sonner'
+import { Select } from 'antd'
 
 interface User {
     id: string
@@ -33,6 +34,13 @@ interface User {
     role: string
     balance: number
     deleted: boolean
+    group_id?: string
+}
+
+interface Group {
+    id: string
+    name: string
+    balance: number
 }
 
 interface TFunction {
@@ -317,6 +325,45 @@ export default function UsersPage() {
     const [showBlacklist, setShowBlacklist] = useState(false)
     const [blacklistCurrentPage, setBlacklistCurrentPage] = useState(1)
     const [blacklistTotal, setBlacklistTotal] = useState(0)
+    const [groups, setGroups] = useState<Group[]>([])
+
+    const fetchGroups = async () => {
+        try {
+            const token = localStorage.getItem('access_token')
+            const res = await fetch('/api/v1/groups', {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const data = await res.json()
+            if (data.success) setGroups(data.data)
+        } catch (err) {
+            console.error('Failed to fetch groups:', err)
+        }
+    }
+
+    const handleAssignGroup = async (userId: string, groupId: string) => {
+        try {
+            const token = localStorage.getItem('access_token')
+            const res = await fetch('/api/v1/users/assign-group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ user_id: userId, group_id: groupId }),
+            })
+            const data = await res.json()
+            if (data.success) {
+                toast.success(t('users.message.updateGroupSuccess'))
+                // Update local state immediately to reflect the change
+                setUsers(prev => prev.map(u => u.id === userId ? { ...u, group_id: groupId === 'none' ? undefined : groupId } : u))
+                fetchUsers(currentPage, false)
+            } else {
+                throw new Error(data.error)
+            }
+        } catch (err) {
+            toast.error(t('users.message.updateGroupError'))
+        }
+    }
 
     const fetchUsers = async (page: number, isBlacklist: boolean = false) => {
         setLoading(true)
@@ -375,6 +422,7 @@ export default function UsersPage() {
     useEffect(() => {
         fetchUsers(currentPage, false)
         fetchBlacklistTotal()
+        fetchGroups()
     }, [currentPage, sortInfo, searchText])
 
     useEffect(() => {
@@ -630,6 +678,26 @@ export default function UsersPage() {
                             </div>
                         </div>
                     </div>
+                ),
+            },
+            {
+                title: 'Group',
+                dataIndex: 'group_id',
+                key: 'group',
+                width: '150px',
+                render: (groupId: string, record: User) => (
+                    <Select
+                        value={groupId || 'none'}
+                        onChange={(value: string) => handleAssignGroup(record.id, value)}
+                        style={{ width: '100%' }}
+                        options={[
+                            { value: 'none', label: 'No Group' },
+                            ...groups.map((g: Group) => ({
+                                value: g.id,
+                                label: g.name,
+                            })),
+                        ]}
+                    />
                 ),
             },
             {

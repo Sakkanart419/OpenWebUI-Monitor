@@ -1,0 +1,396 @@
+{
+    "common": {
+        "appName": "OpenWebUI Monitor",
+        "description": "แพลตฟอร์มตรวจสอบการใช้งานและจัดการยอดคงเหลือสำหรับ OpenWebUI",
+        "loading": "กำลังโหลด...",
+        "error": "โหลดไม่สำเร็จ",
+        "confirm": "ยืนยัน",
+        "cancel": "ยกเลิก",
+        "save": "บันทึก",
+        "edit": "แก้ไข",
+        "delete": "ลบ",
+        "close": "ปิด",
+        "back": "กลับ",
+        "currency": "$",
+        "count": "",
+        "total": "ทั้งหมด",
+        "prev": "ก่อนหน้า",
+        "next": "ถัดไป",
+        "page": "หน้า",
+        "notSet": "ไม่ได้ตั้งค่า",
+        "enterValue": "กรอกข้อมูล",
+        "dateFormat": "DD-MM-YYYY"
+    },
+
+    "auth": {
+        "accessToken": "Access Token",
+        "accessTokenPlaceholder": "กรุณากรอก access token",
+        "accessTokenHelp": "ตัวแปรสภาพแวดล้อม ACCESS_TOKEN",
+        "accessTokenRequired": "กรุณากรอก access token",
+        "showToken": "แสดง Token",
+        "verifying": "กำลังตรวจสอบ...",
+        "verificationFailed": "การตรวจสอบล้มเหลว",
+        "unauthorized": "ไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่",
+        "invalidToken": "Access token ไม่ถูกต้อง",
+        "loginSuccess": "ตรวจสอบ Token สำเร็จ"
+    },
+
+    "header": {
+        "menu": {
+            "copyApiKey": "คัดลอก API KEY",
+            "dataBackup": "การย้ายข้อมูล",
+            "checkUpdate": "ตรวจสอบการอัปเดต",
+            "logout": "ออกจากระบบ",
+            "settings": "ตั้งค่า",
+            "title": "ตัวเลือก"
+        },
+        "messages": {
+            "unauthorized": "ไม่ได้รับอนุญาต กรุณาเข้าสู่ระบบใหม่",
+            "apiKeyNotSet": "ไม่ได้ตั้งค่า API key หรือโหลดไม่สำเร็จ",
+            "apiKeyCopied": "คัดลอก API key ลงในคลิปบอร์ดแล้ว",
+            "updateCheckFailed": "ตรวจสอบการอัปเดตไม่สำเร็จ",
+            "latestVersion": "เวอร์ชันปัจจุบันเป็นเวอร์ชันล่าสุดแล้ว",
+            "getVersionFailed": "ดึงหมายเลขเวอร์ชันไม่สำเร็จ"
+        },
+        "update": {
+            "newVersion": "มีเวอร์ชันใหม่พร้อมใช้งาน",
+            "currentVersion": "เวอร์ชันปัจจุบัน",
+            "latestVersion": "เวอร์ชันล่าสุด",
+            "skipUpdate": "ข้ามการอัปเดต",
+            "goToUpdate": "ไปที่หน้าอัปเดต"
+        },
+        "language": {
+            "zh": "จีน",
+            "en": "EN",
+            "th": "ไทย"
+        }
+    },
+
+    "home": {
+        "features": {
+            "models": {
+                "title": "โมเดล",
+                "description": "จัดการราคา"
+            },
+            "users": {
+                "title": "ผู้ใช้",
+                "description": "จัดการยอดคงเหลือ"
+            },
+            "stats": {
+                "title": "การใช้งาน",
+                "description": "สถิติและกราฟ"
+            },
+            "groups": {
+                "title": "กลุ่ม",
+                "description": "จัดการกลุ่ม"
+            },
+            "reports": {
+                "title": "รายงาน",
+                "description": "รายงานการใช้งาน"
+            }
+        }
+    },
+
+    "models": {
+        "title": "จัดการโมเดล",
+        "description": "จัดการการตั้งค่าราคาสำหรับโมเดลทั้งหมดที่มี",
+        "testAll": "ทดสอบทุกโมเดล",
+        "exportConfig": "ส่งออก",
+        "importConfig": "นำเข้า",
+        "syncWithBaseModel": "ซิงค์กับโมเดลหลัก",
+        "syncAllDerivedModels": "ซิงค์โมเดลย่อยทั้งหมด",
+        "syncSuccess": "ซิงค์ราคาสำเร็จ",
+        "syncFail": "ซิงค์ราคาไม่สำเร็จ",
+        "syncAllSuccess": "ซิงค์โมเดลย่อยทั้งหมดสำเร็จ",
+        "syncAllFail": "โมเดลย่อยบางส่วนซิงค์ไม่สำเร็จ",
+        "noBaseModel": "โมเดลนี้ไม่มีโมเดลหลัก",
+        "baseModelNotFound": "ไม่พบโมเดลหลัก",
+        "noDerivedModels": "ไม่พบโมเดลย่อย",
+        "syncing": "กำลังซิงค์",
+        "syncTooltip": "ซิงค์ราคาจากโมเดลหลักไปยังโมเดลย่อยทั้งหมด ซึ่งจะอัปเดตราคาของโมเดลย่อยตามราคาของโมเดลหลัก",
+        "testTooltip": "คลิกไอคอนโมเดลเพื่อทดสอบทีละรายการ ผลการทดสอบจะแสดงที่มุมขวาบนของไอคอน",
+        "test": {
+            "status": {
+                "valid": "ใช้งานได้",
+                "invalid": "ใช้งานไม่ได้",
+                "pending": "รอดำเนินการ",
+                "testing": "กำลังทดสอบ",
+                "complete": "เสร็จสิ้น"
+            },
+            "progress": {
+                "title": "ความคืบหน้าการทดสอบ",
+                "detail": "คลิกการ์ดเพื่อดูรายละเอียด"
+            },
+            "result": {
+                "success": "โมเดลที่ใช้งานได้",
+                "failed": "โมเดลที่ใช้งานไม่ได้",
+                "complete": "ทดสอบเสร็จสิ้น คลิกการ์ดเพื่อดูรายละเอียด"
+            }
+        },
+        "table": {
+            "name": "โมเดล",
+            "inputPrice": "ราคา Input $ / M tokens",
+            "outputPrice": "ราคา Output $ / M tokens",
+            "perMsgPrice": "ราคาต่อข้อความ $ / ข้อความ",
+            "notSet": "ไม่ได้ตั้งค่า",
+            "mobile": {
+                "inputPrice": "ราคา Input",
+                "outputPrice": "ราคา Output",
+                "perMsgPrice": "ต่อข้อความ"
+            },
+            "perMsgPriceTooltip": "ตั้งค่าเป็นค่าลบเพื่อคิดเงินตาม token แทนการคิดต่อข้อความ",
+            "enterPrice": "กรอกราคา",
+            "priceOverriddenByPerMsg": "ถูกแทนที่ด้วยราคาต่อข้อความ"
+        },
+        "testing": "กำลังทดสอบ",
+        "testComplete": "ทดสอบเสร็จสิ้น",
+        "testingModels": "กำลังทดสอบโมเดล",
+        "testSuccess": "สำเร็จ",
+        "testFailed": "ล้มเหลว",
+        "loading": "กำลังโหลดข้อมูลโมเดล..."
+    },
+
+    "users": {
+        "title": "จัดการผู้ใช้",
+        "description": "จัดการบัญชีผู้ใช้และยอดคงเหลือ คุณสามารถดูรายละเอียดผู้ใช้ ปรับยอดคงเหลือ หรือระงับการใช้งานผู้ใช้ได้",
+        "userInfo": "ข้อมูลผู้ใช้",
+        "balance": "ยอดคงเหลือ",
+        "id": "ID",
+        "name": "ชื่อ",
+        "email": "อีเมล",
+        "role": "บทบาท",
+        "userDetails": "รายละเอียดผู้ใช้",
+        "nickname": "ชื่อเล่น",
+        "message": {
+            "updateBalance": {
+                "success": "อัปเดตยอดคงเหลือสำเร็จ",
+                "error": "อัปเดตยอดคงเหลือไม่สำเร็จ"
+            },
+            "updateGroupSuccess": "อัปเดตกลุ่มสำเร็จ",
+            "fetchUsersError": "ดึงรายชื่อผู้ใช้ไม่สำเร็จ",
+            "invalidNumber": "กรุณากรอกตัวเลขที่ถูกต้อง",
+            "deleteSuccess": "ลบผู้ใช้สำเร็จ",
+            "deleteError": "ลบผู้ใช้ไม่สำเร็จ",
+            "blockSuccess": "ระงับการใช้งานผู้ใช้สำเร็จ",
+            "blockError": "ระงับการใช้งานผู้ใช้ไม่สำเร็จ",
+            "unblockSuccess": "ยกเลิกการระงับการใช้งานผู้ใช้สำเร็จ",
+            "unblockError": "ยกเลิกการระงับการใช้งานผู้ใช้ไม่สำเร็จ",
+            "fetchError": "ดึงรายชื่อผู้ใช้ไม่สำเร็จ"
+        },
+        "actions": "การดำเนินการ",
+        "deleteConfirm": {
+            "title": "ยืนยันการลบผู้ใช้",
+            "description": "คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้ \"{{name}}\"? การดำเนินการนี้ไม่สามารถย้อนกลับได้ และข้อมูลที่เกี่ยวข้องทั้งหมดจะถูกลบ"
+        },
+        "total": "ทั้งหมด",
+        "totalRecords": "รายการ",
+        "search": "ค้นหา",
+        "searchPlaceholder": "ค้นหาด้วยชื่อหรืออีเมล...",
+        "pressEnter": "กด Enter เพื่อค้นหา",
+        "blacklist": {
+            "title": "ผู้ใช้ที่ถูกระงับ",
+            "block": "ระงับ",
+            "unblock": "ยกเลิกการระงับ",
+            "blockConfirm": {
+                "title": "ยืนยันการระงับผู้ใช้",
+                "description": "คุณแน่ใจหรือไม่ว่าต้องการระงับผู้ใช้ \"{{name}}\"? พวกเขาจะไม่สามารถใช้บริการได้หลังจากถูกระงับ"
+            },
+            "unblockConfirm": {
+                "title": "ยืนยันการยกเลิกการระงับผู้ใช้",
+                "description": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการระงับผู้ใช้ \"{{name}}\"? พวกเขาจะสามารถกลับมาใช้บริการได้อีกครั้ง"
+            }
+        },
+        "noResults": {
+            "title": "ไม่พบผู้ใช้",
+            "default": "ไม่มีผู้ใช้ที่จะแสดงในขณะนี้",
+            "withFilter": "ไม่พบผู้ใช้ที่ตรงกับ \"{{filter}}\""
+        },
+        "loading": "กำลังโหลดข้อมูลผู้ใช้..."
+    },
+
+    "records": {
+        "title": "บันทึกการใช้งาน",
+        "description": "ดูบันทึกการใช้งานโมเดลโดยละเอียดสำหรับผู้ใช้ทุกคน รวมถึงเวลาที่ใช้งาน token ที่ใช้ และค่าใช้จ่าย",
+        "export": "ส่งออกบันทึก",
+        "dateRange": "ช่วงวันที่",
+        "input": "Input",
+        "output": "Output",
+        "columns": {
+            "user": "ผู้ใช้",
+            "model": "โมเดล",
+            "tokens": "Tokens",
+            "cost": "ค่าใช้จ่าย",
+            "time": "เวลา",
+            "balance": "ยอดคงเหลือ"
+        }
+    },
+
+    "update": {
+        "newVersion": "มีเวอร์ชันใหม่พร้อมใช้งาน",
+        "currentVersion": "เวอร์ชันปัจจุบัน",
+        "latestVersion": "เวอร์ชันล่าสุด",
+        "ignore": "ละเว้น",
+        "update": "อัปเดต",
+        "skipUpdate": "ข้ามการอัปเดต",
+        "goToUpdate": "ไปที่หน้าอัปเดต"
+    },
+
+    "backup": {
+        "title": "การย้ายข้อมูล",
+        "description": "ส่งออกหรือนำเข้าข้อมูลสำรองฐานข้อมูลสำหรับการย้ายข้อมูลและการกู้คืน",
+        "export": {
+            "title": "ส่งออกข้อมูล",
+            "description": "ส่งออกข้อมูลปัจจุบันเป็นไฟล์สำรอง",
+            "success": "ส่งออกสำเร็จ",
+            "error": "ส่งออกไม่สำเร็จ"
+        },
+        "import": {
+            "title": "นำเข้าข้อมูล",
+            "description": "กู้คืนข้อมูลจากไฟล์สำรอง",
+            "success": "นำเข้าสำเร็จ",
+            "error": "นำเข้าไม่สำเร็จ"
+        }
+    },
+
+    "panel": {
+        "header": "แดชบอร์ดสถิติการใช้งาน - OpenWebUI",
+        "title": "สถิติการใช้งาน",
+        "byAmount": "ตามจำนวนเงิน",
+        "byCount": "ตามจำนวนครั้ง",
+        "timeRange": {
+            "title": "ช่วงเวลา",
+            "timeOptions": {
+                "day": "วันนี้",
+                "week": "สัปดาห์นี้",
+                "month": "เดือนนี้",
+                "30Days": "30 วันที่ผ่านมา",
+                "all": "ทั้งหมด",
+                "custom": "กำหนดเอง"
+            },
+            "customRange": "ช่วงเวลาที่กำหนดเอง",
+            "selectTimeRange": "เลือกช่วงเวลา",
+            "selectDate": "เลือกวันที่"
+        },
+        "modelUsage": {
+            "title": "การใช้งานโมเดล",
+            "total": "ทั้งหมด",
+            "others": "อื่นๆ"
+        },
+        "userUsageChart": {
+            "title": "การใช้งานของผู้ใช้",
+            "yaxis": {
+                "byAmount": "จำนวนเงินที่ใช้",
+                "byCount": "จำนวนครั้งที่ใช้งาน"
+            }
+        },
+        "usageDetails": {
+            "title": "รายละเอียดการใช้งาน",
+            "table": {
+                "user": "ผู้ใช้",
+                "time": "เวลา",
+                "model": "โมเดล",
+                "tokens": "Tokens",
+                "cost": "ค่าใช้จ่าย",
+                "balance": "ยอดคงเหลือ",
+                "costType": "ประเภทค่าใช้จ่าย"
+            }
+        },
+        "description": "ดูการใช้งานโมเดล ข้อมูลการบริโภคของผู้ใช้ และบันทึกการใช้งานโดยละเอียด",
+        "overview": {
+            "totalModels": "โมเดลที่ใช้",
+            "totalUsers": "ผู้ใช้ที่ใช้งาน",
+            "totalCost": "ค่าใช้จ่ายทั้งหมด",
+            "totalCalls": "จำนวนครั้งที่เรียกใช้",
+            "totalTokens": "Tokens ทั้งหมด"
+        },
+        "report": {
+            "daily": "รายงานรายวัน",
+            "weekly": "รายงานรายสัปดาห์",
+            "monthly": "รายงานรายเดือน",
+            "thirtyDays": "รายงาน 30 วัน",
+            "overall": "รายงานภาพรวม",
+            "custom": "รายงานช่วงเวลาที่กำหนดเอง",
+            "mostUsedModel": "โมเดลที่ใช้บ่อยที่สุด",
+            "topUser": "ผู้ใช้ที่ใช้งานสูงสุด",
+            "usageCount": "{{count}} ครั้ง",
+            "spentAmount": "ใช้ไป ${{amount}}",
+            "personal": "ส่วนตัว",
+            "group": "กลุ่ม",
+            "unknown": "ไม่ทราบ"
+        },
+        "globalQuota": {
+            "status": "สถานะโควตาภาพรวม",
+            "total": "โควตาทั้งหมด",
+            "used": "ใช้ไปแล้ว",
+            "remaining": "คงเหลือ",
+            "expireDate": "วันหมดอายุ",
+            "noLimit": "ไม่มีกำหนด"
+        }
+    },
+    "error": {
+        "model": {
+            "failToFetchModels": "ดึงข้อมูลโมเดลไม่สำเร็จ",
+            "unknownError": "ข้อผิดพลาดที่ไม่ทราบสาเหตุ",
+            "failToFetchApiKey": "ดึง API KEY ไม่สำเร็จ",
+            "ApiKeyNotConfigured": "ไม่ได้กำหนดค่า API KEY",
+            "ApiKeyNotFetched": "ไม่ได้ดึง API KEY",
+            "nonePositiveNumber": "กรุณากรอกตัวเลขบวกที่ถูกต้อง",
+            "invalidNumber": "กรุณากรอกตัวเลขที่ถูกต้อง",
+            "priceUpdateFail": "อัปเดตราคาไม่สำเร็จ",
+            "priceUpdateSuccess": "อัปเดตราคาสำเร็จ",
+            "invalidImportFormat": "รูปแบบข้อมูลนำเข้าไม่ถูกต้อง",
+            "batchPriceUpdateFail": "อัปเดตราคาแบบกลุ่มไม่สำเร็จ",
+            "serverResponse": "ผลลัพธ์การอัปเดตจากเซิร์ฟเวอร์",
+            "updateSuccess": "อัปเดตสำเร็จ",
+            "numberOfModelPrice": "ราคาโมเดล",
+            "failToImport": "นำเข้าไม่สำเร็จ",
+            "failToExport": "ส่งออกไม่สำเร็จ",
+            "failToTest": "ทดสอบไม่สำเร็จ",
+            "failToTestWithoutApiKey": "ไม่ได้ดึง API Key ไม่สามารถทดสอบได้"
+        },
+        "panel": {
+            "fetchUsageDataFail": "ดึงข้อมูลการใช้งานไม่สำเร็จ"
+        },
+        "records": {
+            "usageRecord": "บันทึกการใช้งาน",
+            "exportRecord": "ส่งออกบันทึก"
+        }
+    },
+    "groups": {
+        "title": "จัดการกลุ่ม",
+        "description": "จัดการกลุ่มผู้ใช้และตั้งค่าเกณฑ์การแจ้งเตือน",
+        "add": "เพิ่มกลุ่ม",
+        "edit": "แก้ไขกลุ่ม",
+        "id": "ID กลุ่ม",
+        "name": "ชื่อกลุ่ม",
+        "adminEmail": "อีเมลผู้ดูแล",
+        "alertThreshold": "เกณฑ์การแจ้งเตือน ($)",
+        "manageMembers": "จัดการสมาชิก",
+        "manageMembersDesc": "เพิ่มผู้ใช้ในกลุ่มนี้ ผู้ใช้หนึ่งคนสามารถอยู่ในกลุ่มได้เพียงกลุ่มเดียวเท่านั้น",
+        "addToGroup": "เพิ่มเข้ากลุ่ม",
+        "deleteConfirm": {
+            "title": "คุณแน่ใจหรือไม่ว่าต้องการลบกลุ่มนี้?"
+        },
+        "message": {
+            "fetchError": "ดึงข้อมูลกลุ่มไม่สำเร็จ",
+            "saveSuccess": "บันทึกกลุ่มสำเร็จ",
+            "saveError": "บันทึกกลุ่มไม่สำเร็จ",
+            "deleteSuccess": "ลบกลุ่มสำเร็จ",
+            "deleteError": "ลบกลุ่มไม่สำเร็จ",
+            "assignSuccess": "มอบหมายผู้ใช้เข้ากลุ่มสำเร็จ",
+            "assignError": "มอบหมายผู้ใช้เข้ากลุ่มไม่สำเร็จ"
+        }
+    },
+    "reports": {
+        "title": "รายงานการใช้งาน",
+        "exportCsv": "ส่งออก CSV",
+        "type": "ประเภทรายงาน",
+        "userReport": "รายงานผู้ใช้",
+        "groupReport": "รายงานกลุ่ม",
+        "totalTokensPeriod": "Tokens ทั้งหมดในช่วงเวลา",
+        "totalUsagePeriod": "การใช้งานทั้งหมดในช่วงเวลา",
+        "totalTopupPeriod": "การเติมเงินทั้งหมดในช่วงเวลา",
+        "netChange": "การเปลี่ยนแปลงสุทธิ",
+        "usageDetails": "รายละเอียดการใช้งาน"
+    }
+}

@@ -144,131 +144,175 @@ export { getClient }
 
 export async function ensureTablesExist() {
     try {
-        const usersTableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'users'
-      );
-    `)
-
-        if (!usersTableExists.rows[0].exists) {
-            await query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id TEXT PRIMARY KEY,
-          email TEXT NOT NULL,
-          name TEXT NOT NULL,
-          role TEXT NOT NULL DEFAULT 'user',
-          balance DECIMAL(16, 6) NOT NULL DEFAULT 0,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-          deleted BOOLEAN DEFAULT FALSE
-        );
-      `)
-        } else {
-            try {
-                await query(`
-          DO $$ 
-          BEGIN 
-            BEGIN
-              ALTER TABLE users 
-              ADD COLUMN deleted BOOLEAN DEFAULT FALSE;
-            EXCEPTION 
-              WHEN duplicate_column THEN NULL;
-            END;
-          END $$;
-        `)
-            } catch (error) {
-                console.error(
-                    'Error adding deleted column to users table:',
-                    error
-                )
-            }
-        }
-
-        const modelPricesTableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'model_prices'
-      );
-    `)
-
-        const defaultInputPrice = parseFloat(
-            process.env.DEFAULT_MODEL_INPUT_PRICE || '60'
+        // 1. Table: users
+        await query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY);`)
+        await query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT '';`
         )
-        const defaultOutputPrice = parseFloat(
-            process.env.DEFAULT_MODEL_OUTPUT_PRICE || '60'
+        await query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';`
         )
-        const defaultPerMsgPrice = parseFloat(
-            process.env.DEFAULT_MODEL_PER_MSG_PRICE || '-1'
+        await query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';`
+        )
+        await query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS balance DECIMAL(16, 6) NOT NULL DEFAULT 0;`
+        )
+        await query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`
+        )
+        await query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT FALSE;`
+        )
+        await query(`CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);`)
+
+        // 2. Table: groups
+        await query(`CREATE TABLE IF NOT EXISTS groups (id TEXT PRIMARY KEY);`)
+        await query(
+            `ALTER TABLE groups ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';`
+        )
+        await query(
+            `ALTER TABLE groups ADD COLUMN IF NOT EXISTS balance DECIMAL(16, 4) NOT NULL DEFAULT 0;`
+        )
+        await query(`ALTER TABLE groups ADD COLUMN IF NOT EXISTS admin_email TEXT;`)
+        await query(
+            `ALTER TABLE groups ADD COLUMN IF NOT EXISTS alert_threshold DECIMAL(16, 4) DEFAULT 10.00;`
+        )
+        await query(
+            `ALTER TABLE groups ADD COLUMN IF NOT EXISTS last_alerted_at TIMESTAMP WITH TIME ZONE;`
+        )
+        await query(
+            `ALTER TABLE groups ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`
         )
 
-        if (!modelPricesTableExists.rows[0].exists) {
-            await query(`
-        CREATE TABLE IF NOT EXISTS model_prices (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          base_model_id TEXT,
-          input_price NUMERIC(10, 6) DEFAULT ${defaultInputPrice},
-          output_price NUMERIC(10, 6) DEFAULT ${defaultOutputPrice},
-          per_msg_price NUMERIC(10, 6) DEFAULT ${defaultPerMsgPrice},
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-      `)
-        } else {
-            try {
-                await query(`
-          DO $$ 
-          BEGIN 
-            BEGIN
-              ALTER TABLE model_prices 
-              ADD COLUMN per_msg_price NUMERIC(10, 6) DEFAULT ${defaultPerMsgPrice};
-            EXCEPTION 
-              WHEN duplicate_column THEN NULL;
-            END;
-          END $$;
+        // 3. Table: user_group_mapping
+        await query(`
+            CREATE TABLE IF NOT EXISTS user_group_mapping (
+                user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE
+            );
         `)
-            } catch (error) {
-                console.error('Error adding per_msg_price column:', error)
-            }
+        await query(
+            `ALTER TABLE user_group_mapping ADD COLUMN IF NOT EXISTS group_id TEXT REFERENCES groups(id) ON DELETE CASCADE;`
+        )
 
-            try {
-                await query(`
-          DO $$ 
-          BEGIN 
-            BEGIN
-              ALTER TABLE model_prices 
-              ADD COLUMN base_model_id TEXT;
-            EXCEPTION 
-              WHEN duplicate_column THEN NULL;
-            END;
-          END $$;
+        // 4. Table: model_prices
+        await query(
+            `CREATE TABLE IF NOT EXISTS model_prices (id TEXT PRIMARY KEY);`
+        )
+        await query(
+            `ALTER TABLE model_prices ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';`
+        )
+        await query(
+            `ALTER TABLE model_prices ADD COLUMN IF NOT EXISTS base_model_id TEXT;`
+        )
+        await query(
+            `ALTER TABLE model_prices ADD COLUMN IF NOT EXISTS input_price NUMERIC(10, 6) DEFAULT 60.0;`
+        )
+        await query(
+            `ALTER TABLE model_prices ADD COLUMN IF NOT EXISTS output_price NUMERIC(10, 6) DEFAULT 60.0;`
+        )
+        await query(
+            `ALTER TABLE model_prices ADD COLUMN IF NOT EXISTS per_msg_price NUMERIC(10, 6) DEFAULT -1.0;`
+        )
+        await query(
+            `ALTER TABLE model_prices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`
+        )
+
+        // 5. Table: user_usage_records
+        await query(
+            `CREATE TABLE IF NOT EXISTS user_usage_records (id SERIAL PRIMARY KEY);`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL REFERENCES users(id);`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS nickname VARCHAR(255) NOT NULL DEFAULT '';`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS use_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS model_name VARCHAR(255) NOT NULL DEFAULT '';`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS input_tokens INTEGER NOT NULL DEFAULT 0;`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS output_tokens INTEGER NOT NULL DEFAULT 0;`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS cost DECIMAL(16, 4) NOT NULL DEFAULT 0;`
+        )
+        await query(
+            `ALTER TABLE user_usage_records ADD COLUMN IF NOT EXISTS balance_after DECIMAL(16, 4) NOT NULL DEFAULT 0;`
+        )
+
+        // 6. Table: transactions
+        await query(`CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY);`)
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE;`
+        )
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS group_id TEXT REFERENCES groups(id) ON DELETE CASCADE;`
+        )
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'USAGE';`
+        )
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'PERSONAL';`
+        )
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS amount DECIMAL(16, 4) NOT NULL DEFAULT 0;`
+        )
+        await query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS model_id TEXT;`)
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS record_id INTEGER;`
+        )
+        await query(
+            `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`
+        )
+
+        // 7. Table: topup_history
+        await query(
+            `CREATE TABLE IF NOT EXISTS topup_history (id SERIAL PRIMARY KEY);`
+        )
+        await query(
+            `ALTER TABLE topup_history ADD COLUMN IF NOT EXISTS target_id TEXT NOT NULL DEFAULT '';`
+        )
+        await query(
+            `ALTER TABLE topup_history ADD COLUMN IF NOT EXISTS target_type TEXT NOT NULL DEFAULT 'USER';`
+        )
+        await query(
+            `ALTER TABLE topup_history ADD COLUMN IF NOT EXISTS amount DECIMAL(16, 4) NOT NULL DEFAULT 0;`
+        )
+        await query(
+            `ALTER TABLE topup_history ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`
+        )
+
+        // 8. Table: system_stats
+        await query(`
+            CREATE TABLE IF NOT EXISTS system_stats (
+                key TEXT PRIMARY KEY,
+                value_decimal DECIMAL(16, 4) DEFAULT 0.0000,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
         `)
-            } catch (error) {
-                console.error('Error adding base_model_id column:', error)
-            }
-        }
 
-        const userUsageRecordsTableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'user_usage_records'
-      );
-    `)
+        // Initialize global_usage_total if it doesn't exist
+        const result = await query(
+            "SELECT key FROM system_stats WHERE key = 'global_usage_total'"
+        )
+        if (result.rows.length === 0) {
+            // Calculate initial total from existing records
+            const usageResult = await query(
+                'SELECT COALESCE(SUM(cost), 0) as total FROM user_usage_records'
+            )
+            const total = usageResult.rows[0].total
 
-        if (!userUsageRecordsTableExists.rows[0].exists) {
-            await query(`
-        CREATE TABLE IF NOT EXISTS user_usage_records (
-          id SERIAL PRIMARY KEY,
-          user_id TEXT NOT NULL,
-          nickname VARCHAR(255) NOT NULL,
-          use_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-          model_name VARCHAR(255) NOT NULL,
-          input_tokens INTEGER NOT NULL,
-          output_tokens INTEGER NOT NULL,
-          cost DECIMAL(10, 4) NOT NULL,
-          balance_after DECIMAL(10, 4) NOT NULL,
-          FOREIGN KEY (user_id) REFERENCES users(id)
-        );
-      `)
+            await query(
+                "INSERT INTO system_stats (key, value_decimal) VALUES ('global_usage_total', $1)",
+                [total]
+            )
         }
 
         console.log('Database tables initialized successfully')
@@ -286,6 +330,19 @@ export async function initDatabase() {
         console.error('Failed to initialize database:', error)
         throw error
     }
+}
+
+export async function syncGlobalUsage() {
+    const usageResult = await query(
+        'SELECT COALESCE(SUM(cost), 0) as total FROM user_usage_records'
+    )
+    const total = usageResult.rows[0].total
+
+    await query(
+        "UPDATE system_stats SET value_decimal = $1, updated_at = CURRENT_TIMESTAMP WHERE key = 'global_usage_total'",
+        [total]
+    )
+    return total
 }
 
 export interface ModelPrice {

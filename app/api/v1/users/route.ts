@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
         const sortOrder = searchParams.get('sortOrder')
         const search = searchParams.get('search')
         const deleted = searchParams.get('deleted') === 'true'
+        const all = searchParams.get('all') === 'true'
 
         const conditions = [`deleted = ${deleted}`]
         const params = []
@@ -40,18 +41,22 @@ export async function GET(req: NextRequest) {
         )
         const total = parseInt(countResult.rows[0].count)
 
-        const result = await query(
-            `SELECT id, email, name, role, balance, deleted, created_at 
-       FROM users 
-       ${whereClause} 
+        let queryStr = `SELECT u.id, u.email, u.name, u.role, u.balance, u.deleted, u.created_at, m.group_id
+       FROM users u
+       LEFT JOIN user_group_mapping m ON u.id = m.user_id
+       ${whereClause.replace('WHERE ', 'WHERE u.')}
        ${
            sortField
-               ? `ORDER BY ${sortField} ${sortOrder === 'descend' ? 'DESC' : 'ASC'}`
-               : 'ORDER BY created_at DESC'
-       }
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-            [...params, pageSize, (page - 1) * pageSize]
-        )
+               ? `ORDER BY u.${sortField} ${sortOrder === 'descend' ? 'DESC' : 'ASC'}`
+               : 'ORDER BY u.created_at DESC'
+       }`
+
+        if (!all) {
+            queryStr += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`
+            params.push(pageSize, (page - 1) * pageSize)
+        }
+
+        const result = await query(queryStr, params)
 
         return NextResponse.json({
             users: result.rows,
