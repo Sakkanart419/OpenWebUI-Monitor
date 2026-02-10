@@ -44,12 +44,15 @@ sudo docker compose up -d
 | OPENWEBUI_DOMAIN  | OpenWebUI domain                                                      | `https://chat.example.com` |
 | OPENWEBUI_API_KEY | OpenWebUI API Key, found in `Personal Settings -> Account -> API Key` | `sk-xxxxxxxxxxxxxxxx`      |
 | API_KEY           | For API request verification (must be less than 56 characters)        | `your-api-key-here`        |
-| ACCESS_TOKEN      | For page access verification                                          | `your-access-token-here`   |
+| ACCESS_TOKEN      | For page access verification (Full Access)                            | `your-access-token-here`   |
 
 ### Optional
 
 | Variable Name               | Description                                                                                                                                 | Default Value |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| READ_ONLY_TOKEN             | Global read-only access (cannot modify any settings or balances)                                                                            | -             |
+| MODEL_READ_ONLY_TOKEN       | Read-only access for model pricing, but full access to other features                                                                       | -             |
+
 | DEFAULT_MODEL_INPUT_PRICE   | Default model input price, in USD per million tokens                                                                                        | `60`          |
 | DEFAULT_MODEL_OUTPUT_PRICE  | Default model output price, in USD per million tokens                                                                                       | `60`          |
 | DEFAULT_MODEL_PER_MSG_PRICE | Default model price for each message, in USD                                                                                                | `-1`          |
