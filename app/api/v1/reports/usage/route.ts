@@ -17,8 +17,8 @@ export async function GET(req: Request) {
 
         // Adjust dates to include full day only if they are simple YYYY-MM-DD strings
         const isSimpleDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date)
-        const start = startDate && isSimpleDate(startDate) ? `${startDate} 00:00:00` : (startDate || '1970-01-01 00:00:00')
-        const end = endDate && isSimpleDate(endDate) ? `${endDate} 23:59:59` : (endDate || '2100-01-01 23:59:59')
+        const start = startDate && isSimpleDate(startDate) ? `${startDate} 00:00:00+07` : (startDate || '1970-01-01 00:00:00+07')
+        const end = endDate && isSimpleDate(endDate) ? `${endDate} 23:59:59+07` : (endDate || '2100-01-01 23:59:59+07')
 
         let sql = ''
         let params: any[] = []

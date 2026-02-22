@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { encode } from 'gpt-tokenizer/model/gpt-4'
 import { Pool, PoolClient } from 'pg'
 import { createClient } from '@vercel/postgres'
-import { query, getClient } from '@/lib/db/client'
+import { query, getClient, getGlobalConfig } from '@/lib/db/client'
 import { getModelInletCost } from '@/lib/utils/inlet-cost'
 
 const isVercel = process.env.VERCEL === '1'
@@ -75,11 +75,38 @@ export async function POST(req: Request) {
         const userId = data.user.id
         const userName = data.user.name || 'Unknown User'
 
-        await query('BEGIN')
+        // Fetch global config before transaction
+        const globalConfig = await getGlobalConfig()
 
-        const modelPrice = await getModelPrice(modelId)
+        // Helper function to run queries using the same client
+        const runQuery = async (text: string, params?: any[]) => {
+            if (isVercel) {
+                return (pgClient as ReturnType<typeof createClient>).query(text, params)
+            } else {
+                return (pgClient as PoolClient).query(text, params)
+            }
+        }
+
+        await runQuery('BEGIN')
+
+        const modelPriceResult = await runQuery(
+            `SELECT id, name, input_price, output_price, per_msg_price 
+             FROM model_prices 
+             WHERE id = $1`,
+            [modelId]
+        )
+        
+        let modelPrice = modelPriceResult.rows[0]
         if (!modelPrice) {
-            throw new Error(`Fail to fetch price info of model ${modelId}`)
+            const defaultInputPrice = parseFloat(process.env.DEFAULT_MODEL_INPUT_PRICE || '60')
+            const defaultOutputPrice = parseFloat(process.env.DEFAULT_MODEL_OUTPUT_PRICE || '60')
+            modelPrice = {
+                id: modelId,
+                name: modelId,
+                input_price: defaultInputPrice,
+                output_price: defaultOutputPrice,
+                per_msg_price: -1,
+            }
         }
 
         const lastMessage = data.body.messages[data.body.messages.length - 1]
@@ -123,7 +150,7 @@ export async function POST(req: Request) {
         const actualCost = totalCost + inletCost
 
         // Check if user belongs to a group
-        const groupMapping = await query(
+        const groupMapping = await runQuery(
             'SELECT g.* FROM groups g JOIN user_group_mapping ugm ON g.id = ugm.group_id WHERE ugm.user_id = $1',
             [userId]
         )
@@ -135,7 +162,7 @@ export async function POST(req: Request) {
 
         if (group) {
             // 1. Try to deduct from group first
-            const groupResult = await query(
+            const groupResult = await runQuery(
                 `UPDATE groups 
                  SET balance = balance - CAST($1 AS DECIMAL(16,4))
                  WHERE id = $2 AND balance >= $1
@@ -148,7 +175,7 @@ export async function POST(req: Request) {
                 source = 'group'
                 
                 // Log transaction
-                const transResult = await query(
+                const transResult = await runQuery(
                     `INSERT INTO transactions (user_id, group_id, type, source, amount, model_id)
                      VALUES ($1, $2, 'USAGE', 'GROUP', $3, $4)
                      RETURNING id`,
@@ -157,7 +184,7 @@ export async function POST(req: Request) {
                 transactionId = transResult.rows[0].id
             } else {
                 // Fallback to personal balance
-                const userResult = await query(
+                const userResult = await runQuery(
                     `UPDATE users 
                      SET balance = balance - CAST($1 AS DECIMAL(16,4))
                      WHERE id = $2 AND NOT deleted AND balance >= $1
@@ -171,7 +198,7 @@ export async function POST(req: Request) {
                 newBalance = Number(userResult.rows[0].balance)
                 
                 // Log transaction
-                const transResult = await query(
+                const transResult = await runQuery(
                     `INSERT INTO transactions (user_id, type, source, amount, model_id)
                      VALUES ($1, 'USAGE', 'PERSONAL', $2, $3)
                      RETURNING id`,
@@ -181,7 +208,7 @@ export async function POST(req: Request) {
             }
         } else {
             // No group, deduct from personal balance
-            const userResult = await query(
+            const userResult = await runQuery(
                 `UPDATE users 
                  SET balance = balance - CAST($1 AS DECIMAL(16,4))
                  WHERE id = $2 AND NOT deleted
@@ -195,7 +222,7 @@ export async function POST(req: Request) {
             newBalance = Number(userResult.rows[0].balance)
 
             // Log transaction
-            const transResult = await query(
+            const transResult = await runQuery(
                 `INSERT INTO transactions (user_id, type, source, amount, model_id)
                  VALUES ($1, 'USAGE', 'PERSONAL', $2, $3)
                  RETURNING id`,
@@ -208,7 +235,7 @@ export async function POST(req: Request) {
             throw new Error('Balance exceeds maximum allowed value')
         }
 
-        const usageRecordResult = await query(
+        const usageRecordResult = await runQuery(
             `INSERT INTO user_usage_records (
         user_id, nickname, model_name, 
         input_tokens, output_tokens, 
@@ -228,21 +255,29 @@ export async function POST(req: Request) {
 
         const recordId = usageRecordResult.rows[0].id
 
-        // Update global usage total
-        await query(
-            "UPDATE system_stats SET value_decimal = value_decimal + CAST($1 AS DECIMAL(16,4)), updated_at = CURRENT_TIMESTAMP WHERE key = 'global_usage_total'",
-            [actualCost]
-        )
+        // Update global usage total (only if within period)
+        if (globalConfig && globalConfig.enable) {
+            const recordDate = new Date().toISOString().split('T')[0]
+            const startDate = globalConfig.startDate && globalConfig.startDate !== 'null' ? globalConfig.startDate : '0000-00-00'
+            const expireDate = globalConfig.expireDate && globalConfig.expireDate !== 'null' ? globalConfig.expireDate : '9999-12-31'
+
+            if (recordDate >= startDate && recordDate <= expireDate) {
+                await runQuery(
+                    "UPDATE system_stats SET value_decimal = value_decimal + CAST($1 AS DECIMAL(16,4)), updated_at = CURRENT_TIMESTAMP WHERE key = 'global_usage_total'",
+                    [actualCost]
+                )
+            }
+        }
 
         // Update transaction with record_id
         if (transactionId) {
-            await query(
+            await runQuery(
                 `UPDATE transactions SET record_id = $1 WHERE id = $2`,
                 [recordId, transactionId]
             )
         }
 
-        await query('COMMIT')
+        await runQuery('COMMIT')
 
         console.log(
             JSON.stringify({

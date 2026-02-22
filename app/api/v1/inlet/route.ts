@@ -1,38 +1,44 @@
 import { NextResponse } from 'next/server'
 import { getOrCreateUser } from '@/lib/db/users'
-import { query } from '@/lib/db/client'
+import { query, getGlobalConfig } from '@/lib/db/client'
 import { getModelInletCost } from '@/lib/utils/inlet-cost'
 
 export async function POST(req: Request) {
     try {
-        // Global Quota Check
-        const globalLimitEnable = process.env.GLOBAL_LIMIT_ENABLE === 'true'
-        if (globalLimitEnable) {
-            const globalLimitQuota = parseFloat(process.env.GLOBAL_LIMIT_QUOTA || '0')
-            const globalLimitExpireDate = process.env.GLOBAL_LIMIT_EXPIRE_DATE
+        const data = await req.json()
+        console.log('Inlet request received for user:', data.user?.id)
 
-            // Check Expiration
-            if (globalLimitExpireDate) {
-                const expireDate = new Date(globalLimitExpireDate)
-                if (new Date() > expireDate) {
+        // Global Quota Check
+        const globalConfig = await getGlobalConfig()
+        if (globalConfig && globalConfig.enable) {
+            const globalLimitQuota = globalConfig.quota
+            const globalLimitStartDate = globalConfig.startDate
+            const globalLimitExpireDate = globalConfig.expireDate
+            const now = new Date()
+
+            // Check Start Date
+            if (globalLimitStartDate && globalLimitStartDate !== 'null') {
+                const startDate = new Date(globalLimitStartDate + ' 00:00:00')
+                if (now < startDate) {
+                    throw new Error('Insufficient fund (Global quota period not started)')
+                }
+            }
+
+            // Check Expiration (end of day)
+            if (globalLimitExpireDate && globalLimitExpireDate !== 'null') {
+                const expireDate = new Date(globalLimitExpireDate + ' 23:59:59')
+                if (now > expireDate) {
                     throw new Error('Insufficient fund (Global quota expired)')
                 }
             }
 
             // Check Quota
-            const globalUsageResult = await query(
-                "SELECT value_decimal FROM system_stats WHERE key = 'global_usage_total'"
-            )
-            const currentGlobalUsage = parseFloat(
-                globalUsageResult.rows[0]?.value_decimal || '0'
-            )
-
+            const currentGlobalUsage = globalConfig.usage
             if (currentGlobalUsage >= globalLimitQuota) {
                 throw new Error('Insufficient fund (Global quota exceeded)')
             }
         }
 
-        const data = await req.json()
         const user = await getOrCreateUser(data.user)
         const modelId = data.body?.model
 

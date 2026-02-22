@@ -38,8 +38,8 @@ export async function GET(req: Request) {
         if (startDate && endDate) {
             // Adjust dates to include full day only if they are simple YYYY-MM-DD strings
             const isSimpleDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date)
-            const start = isSimpleDate(startDate) ? `${startDate} 00:00:00` : startDate
-            const end = isSimpleDate(endDate) ? `${endDate} 23:59:59` : endDate
+            const start = isSimpleDate(startDate) ? `${startDate} 00:00:00+07` : startDate
+            const end = isSimpleDate(endDate) ? `${endDate} 23:59:59+07` : endDate
             
             conditions.push(
                 `use_time >= $${paramIndex} AND use_time <= $${paramIndex + 1}`

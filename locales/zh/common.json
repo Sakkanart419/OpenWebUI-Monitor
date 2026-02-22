@@ -321,6 +321,7 @@
             "total": "总配额",
             "used": "已使用",
             "remaining": "剩余",
+            "startDate": "开始日期",
             "expireDate": "过期时间",
             "noLimit": "无限制"
         }

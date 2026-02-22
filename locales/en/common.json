@@ -322,6 +322,7 @@
             "total": "Total Quota",
             "used": "Used",
             "remaining": "Remaining",
+            "startDate": "Start Date",
             "expireDate": "Expire Date",
             "noLimit": "No Limit"
         }

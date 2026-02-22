@@ -1,4 +1,4 @@
-import { query, ensureTablesExist, syncGlobalUsage } from '@/lib/db/client'
+import { query, ensureTablesExist, syncGlobalUsage, syncGlobalUsageInPeriod, getGlobalConfig } from '@/lib/db/client'
 import { NextResponse } from 'next/server'
 import { verifyApiToken } from '@/lib/auth'
 
@@ -20,7 +20,8 @@ export async function POST(req: Request) {
         }
 
         if (action === 'sync_global_usage') {
-            const total = await syncGlobalUsage()
+            const globalConfig = await getGlobalConfig()
+            const total = await syncGlobalUsageInPeriod(globalConfig.startDate, globalConfig.expireDate)
             return NextResponse.json({
                 success: true,
                 message: `Global usage synchronized successfully. Total: ${total}`,

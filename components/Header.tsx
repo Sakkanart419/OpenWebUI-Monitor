@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/button'
 import { createRoot } from 'react-dom/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { FiDatabase, FiUsers, FiBarChart2 } from 'react-icons/fi'
+import { FiDatabase, FiUser, FiUsers, FiBarChart2, FiFileText } from 'react-icons/fi'
 
 export default function Header() {
     const { t, i18n } = useTranslation('common')
@@ -283,7 +283,7 @@ export default function Header() {
         },
         {
             path: '/users',
-            icon: <FiUsers className="w-5 h-5" />,
+            icon: <FiUser className="w-5 h-5" />,
             label: t('home.features.users.title'),
             color: 'from-rose-500/10 to-pink-500/10',
             hoverColor: 'group-hover:text-rose-600',
@@ -304,7 +304,7 @@ export default function Header() {
         },
         {
             path: '/reports',
-            icon: <FiBarChart2 className="w-5 h-5" />,
+            icon: <FiFileText className="w-5 h-5" />,
             label: t('home.features.reports.title'),
             color: 'from-orange-500/10 to-amber-500/10',
             hoverColor: 'group-hover:text-orange-600',

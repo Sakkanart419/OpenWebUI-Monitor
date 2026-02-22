@@ -143,6 +143,7 @@ if (typeof window === 'undefined') {
 export { getClient }
 
 export async function ensureTablesExist() {
+    const startTime = Date.now()
     try {
         // 1. Table: users
         await query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY);`)
@@ -298,24 +299,81 @@ export async function ensureTablesExist() {
             );
         `)
 
-        // Initialize global_usage_total if it doesn't exist
-        const result = await query(
-            "SELECT key FROM system_stats WHERE key = 'global_usage_total'"
+        // Ensure value_text column exists
+        await query(`
+            DO $$ 
+            BEGIN 
+                BEGIN
+                    ALTER TABLE system_stats ADD COLUMN value_text TEXT;
+                EXCEPTION 
+                    WHEN duplicate_column THEN NULL;
+                END;
+            END $$;
+        `)
+
+                // Initialize global config records if they don't exist
+                const keys = ['global_usage_total', 'global_limit_enable', 'global_limit_quota', 'global_limit_start_date', 'global_limit_expire_date']
+                for (const key of keys) {
+                    const result = await query("SELECT key, value_decimal, value_text FROM system_stats WHERE key = $1", [key])
+                    
+                    let value_decimal = null
+                    let value_text = null
+                    let shouldUpdate = false
+
+                    if (key === 'global_usage_total') {
+                        if (result.rows.length === 0) {
+                            // Calculate initial total from existing records
+                            const usageResult = await query('SELECT COALESCE(SUM(cost), 0) as total FROM user_usage_records')
+                            value_decimal = usageResult.rows[0].total
+                            shouldUpdate = true
+                        }
+                    } else if (key === 'global_limit_enable') {
+                        value_text = (process.env.GLOBAL_LIMIT_ENABLE === 'true').toString()
+                        if (result.rows.length === 0 || result.rows[0].value_text !== value_text) {
+                            shouldUpdate = true
+                        }
+                    } else if (key === 'global_limit_quota') {
+                        value_decimal = parseFloat(process.env.GLOBAL_LIMIT_QUOTA || '0')
+                        if (result.rows.length === 0 || parseFloat(result.rows[0].value_decimal || '0') !== value_decimal) {
+                            shouldUpdate = true
+                        }
+                    } else if (key === 'global_limit_start_date') {
+                        value_text = process.env.GLOBAL_LIMIT_START_DATE || null
+                        if (result.rows.length === 0 || result.rows[0].value_text !== value_text) {
+                            shouldUpdate = true
+                        }
+                    } else if (key === 'global_limit_expire_date') {
+                        value_text = process.env.GLOBAL_LIMIT_EXPIRE_DATE || null
+                        if (result.rows.length === 0 || result.rows[0].value_text !== value_text) {
+                            shouldUpdate = true
+                        }
+                    }
+
+                    if (shouldUpdate) {
+                        if (result.rows.length === 0) {
+                            await query(
+                                "INSERT INTO system_stats (key, value_decimal, value_text) VALUES ($1, $2, $3)",
+                                [key, value_decimal, value_text]
+                            )
+                        } else {
+                            await query(
+                                "UPDATE system_stats SET value_decimal = $2, value_text = $3, updated_at = CURRENT_TIMESTAMP WHERE key = $1",
+                                [key, value_decimal, value_text]
+                            )
+                        }
+
+                        // If any limit config changed, re-sync usage total for the period
+                        if (key.startsWith('global_limit_')) {
+                            const currentConfig = await getGlobalConfig()
+                            await syncGlobalUsageInPeriod(currentConfig.startDate, currentConfig.expireDate)
+                        }
+                    }
+                }
+
+        const duration = Date.now() - startTime
+        console.log(
+            `[STARTUP] Database tables initialized successfully in ${duration}ms`
         )
-        if (result.rows.length === 0) {
-            // Calculate initial total from existing records
-            const usageResult = await query(
-                'SELECT COALESCE(SUM(cost), 0) as total FROM user_usage_records'
-            )
-            const total = usageResult.rows[0].total
-
-            await query(
-                "INSERT INTO system_stats (key, value_decimal) VALUES ('global_usage_total', $1)",
-                [total]
-            )
-        }
-
-        console.log('Database tables initialized successfully')
     } catch (error) {
         console.error('Failed to initialize database tables:', error)
         throw error
@@ -343,6 +401,85 @@ export async function syncGlobalUsage() {
         [total]
     )
     return total
+}
+
+export async function syncGlobalUsageInPeriod(startDate?: string, endDate?: string) {
+    let queryText = 'SELECT COALESCE(SUM(cost), 0) as total FROM user_usage_records WHERE 1=1'
+    const params: any[] = []
+
+    if (startDate && startDate !== 'null') {
+        params.push(startDate + ' 00:00:00')
+        queryText += ` AND use_time >= $${params.length}`
+    }
+    if (endDate && endDate !== 'null') {
+        params.push(endDate + ' 23:59:59')
+        queryText += ` AND use_time <= $${params.length}`
+    }
+
+    const usageResult = await query(queryText, params)
+    const total = usageResult.rows[0].total
+
+    await query(
+        "UPDATE system_stats SET value_decimal = $1, updated_at = CURRENT_TIMESTAMP WHERE key = 'global_usage_total'",
+        [total]
+    )
+    return total
+}
+
+export async function updateGlobalConfig(config: { enable?: boolean, quota?: number, startDate?: string, expireDate?: string }) {
+    if (config.enable !== undefined) {
+        await query(
+            "UPDATE system_stats SET value_text = $1, updated_at = CURRENT_TIMESTAMP WHERE key = 'global_limit_enable'",
+            [config.enable.toString()]
+        )
+    }
+    if (config.quota !== undefined) {
+        await query(
+            "UPDATE system_stats SET value_decimal = $1, updated_at = CURRENT_TIMESTAMP WHERE key = 'global_limit_quota'",
+            [config.quota]
+        )
+    }
+    if (config.startDate !== undefined) {
+        await query(
+            "UPDATE system_stats SET value_text = $1, updated_at = CURRENT_TIMESTAMP WHERE key = 'global_limit_start_date'",
+            [config.startDate]
+        )
+    }
+    if (config.expireDate !== undefined) {
+        await query(
+            "UPDATE system_stats SET value_text = $1, updated_at = CURRENT_TIMESTAMP WHERE key = 'global_limit_expire_date'",
+            [config.expireDate]
+        )
+    }
+
+    // Auto-sync usage when config changes
+    const currentConfig = await getGlobalConfig()
+    const startDate = config.startDate || currentConfig.startDate
+    const endDate = config.expireDate || currentConfig.expireDate
+    await syncGlobalUsageInPeriod(startDate, endDate)
+}
+
+export async function getGlobalConfig() {
+    const results = await query(
+        "SELECT key, value_decimal, value_text FROM system_stats WHERE key IN ('global_limit_enable', 'global_limit_quota', 'global_limit_start_date', 'global_limit_expire_date', 'global_usage_total')"
+    )
+
+    const config: any = {}
+    results.rows.forEach(row => {
+        if (row.key === 'global_limit_enable') {
+            config.enable = row.value_text === 'true'
+        } else if (row.key === 'global_limit_quota') {
+            config.quota = parseFloat(row.value_decimal || '0')
+        } else if (row.key === 'global_limit_start_date') {
+            config.startDate = row.value_text
+        } else if (row.key === 'global_limit_expire_date') {
+            config.expireDate = row.value_text
+        } else if (row.key === 'global_usage_total') {
+            config.usage = parseFloat(row.value_decimal || '0')
+        }
+    })
+
+    return config
 }
 
 export interface ModelPrice {

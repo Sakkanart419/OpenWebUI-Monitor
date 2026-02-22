@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { query } from '@/lib/db/client'
+import { getGlobalConfig } from '@/lib/db/client'
 import { verifyApiToken } from '@/lib/auth'
 
 export async function GET(req: Request) {
@@ -9,25 +9,17 @@ export async function GET(req: Request) {
     }
 
     try {
-        const globalLimitEnable = process.env.GLOBAL_LIMIT_ENABLE === 'true'
-        const globalLimitQuota = parseFloat(process.env.GLOBAL_LIMIT_QUOTA || '0')
-        const globalLimitExpireDate = process.env.GLOBAL_LIMIT_EXPIRE_DATE
-
-        const globalUsageResult = await query(
-            "SELECT value_decimal FROM system_stats WHERE key = 'global_usage_total'"
-        )
-        const currentGlobalUsage = parseFloat(
-            globalUsageResult.rows[0]?.value_decimal || '0'
-        )
+        const globalConfig = await getGlobalConfig()
 
         return NextResponse.json({
             success: true,
             data: {
-                enabled: globalLimitEnable,
-                quota: globalLimitQuota,
-                usage: currentGlobalUsage,
-                remaining: Math.max(0, globalLimitQuota - currentGlobalUsage),
-                expireDate: globalLimitExpireDate,
+                enabled: globalConfig.enable,
+                quota: globalConfig.quota,
+                usage: globalConfig.usage,
+                remaining: Math.max(0, globalConfig.quota - globalConfig.usage),
+                startDate: globalConfig.startDate,
+                expireDate: globalConfig.expireDate,
             },
         })
     } catch (error) {

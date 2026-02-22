@@ -134,9 +134,13 @@ export default function ReportsPage() {
             const result = await res.json()
             if (result.success) {
                 setGlobalQuota(result.data)
+            } else {
+                console.error('Global quota API error:', result.error)
+                setGlobalQuota(null)
             }
         } catch (err) {
             console.error('Fetch global quota error:', err)
+            setGlobalQuota(null)
         }
     }
 
@@ -414,6 +418,16 @@ export default function ReportsPage() {
                             <Statistic
                                 title={t('panel.globalQuota.expireDate')}
                                 value={globalQuota.expireDate || t('panel.globalQuota.noLimit')}
+                                formatter={(val) => {
+                                    if (val === t('panel.globalQuota.noLimit')) return val
+                                    return dayjs(val).format(t('common.dateFormat') || 'YYYY-MM-DD')
+                                }}
+                            />
+                        </Col>
+                        <Col span={6}>
+                            <Statistic
+                                title={t('panel.globalQuota.startDate')}
+                                value={globalQuota.startDate || t('panel.globalQuota.noLimit')}
                                 formatter={(val) => {
                                     if (val === t('panel.globalQuota.noLimit')) return val
                                     return dayjs(val).format(t('common.dateFormat') || 'YYYY-MM-DD')
