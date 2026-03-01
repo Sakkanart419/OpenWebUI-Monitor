@@ -111,16 +111,66 @@ export async function POST(req: Request) {
 
         const lastMessage = data.body.messages[data.body.messages.length - 1]
 
-        let inputTokens: number
-        let outputTokens: number
-        if (
-            lastMessage.usage &&
-            lastMessage.usage.prompt_tokens &&
-            lastMessage.usage.completion_tokens
-        ) {
-            inputTokens = lastMessage.usage.prompt_tokens
-            outputTokens = lastMessage.usage.completion_tokens
-        } else {
+        let inputTokens: number = 0
+        let outputTokens: number = 0
+        let usageSource: 'usage_data' | 'tokenizer' = 'tokenizer'
+
+        const usage = lastMessage.usage
+        if (usage) {
+            const tokenDetails = usage.token_details
+            
+            // Base counts from standard fields
+            const promptBase = Number(
+                usage.prompt_tokens ||
+                tokenDetails?.prompt_token_count ||
+                usage.prompt_token_count ||
+                0
+            )
+
+            const candidatesBase = Number(
+                usage.completion_tokens ||
+                tokenDetails?.candidates_token_count ||
+                usage.candidates_token_count ||
+                0
+            )
+
+            const thoughts = Number(
+                tokenDetails?.thoughts_token_count ||
+                usage.thoughts_token_count ||
+                0
+            )
+
+            // Calculate sums from details if available
+            const promptDetailsSum = (tokenDetails?.prompt_tokens_details && Array.isArray(tokenDetails.prompt_tokens_details))
+                ? tokenDetails.prompt_tokens_details.reduce((acc: number, d: any) => acc + Number(d.token_count || 0), 0)
+                : 0
+
+            const candidatesDetailsSum = (tokenDetails?.candidates_tokens_details && Array.isArray(tokenDetails.candidates_tokens_details))
+                ? tokenDetails.candidates_tokens_details.reduce((acc: number, d: any) => acc + Number(d.token_count || 0), 0)
+                : 0
+
+            // Logic to determine if details are separate or included in base counts:
+            // 1. If sum of details > base count, they are likely separate (e.g. nano banana case) -> SUM them.
+            // 2. If sum of details <= base count, base likely already includes them (e.g. Gemini Flash case) -> use MAX.
+            
+            const finalInput = (promptDetailsSum > promptBase)
+                ? (promptBase + promptDetailsSum)
+                : Math.max(promptBase, promptDetailsSum)
+            
+            const finalOutputBase = (candidatesDetailsSum > candidatesBase)
+                ? (candidatesBase + candidatesDetailsSum)
+                : Math.max(candidatesBase, candidatesDetailsSum)
+
+            if (finalInput > 0 || finalOutputBase > 0 || thoughts > 0) {
+                inputTokens = finalInput
+                outputTokens = finalOutputBase + thoughts
+                usageSource = 'usage_data'
+            }
+        }
+
+        // Fallback to tokenizer if usage data is missing or both are 0
+        if (usageSource === 'tokenizer' || (inputTokens === 0 && outputTokens === 0)) {
+            usageSource = 'tokenizer'
             outputTokens = encode(lastMessage.content).length
             const totalTokens = data.body.messages.reduce(
                 (sum: number, msg: Message) => sum + encode(msg.content).length,
@@ -284,6 +334,7 @@ export async function POST(req: Request) {
                 success: true,
                 inputTokens,
                 outputTokens,
+                usageSource,
                 actualCost,
                 newBalance,
                 message: 'Request successful',
@@ -294,6 +345,7 @@ export async function POST(req: Request) {
             success: true,
             inputTokens,
             outputTokens,
+            usageSource,
             actualCost,
             newBalance,
             source,
