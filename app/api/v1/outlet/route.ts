@@ -120,34 +120,48 @@ export async function POST(req: Request) {
             const tokenDetails = usage.token_details
             
             // Base counts from standard fields
+            // Support multiple usage formats:
+            //  - OpenAI Chat Completions: prompt_tokens / completion_tokens
+            //  - OpenAI Responses API (gpt-5.x, newer models): input_tokens / output_tokens
+            //  - Gemini: token_details.prompt_token_count / candidates_token_count
             const promptBase = Number(
-                usage.prompt_tokens ||
-                tokenDetails?.prompt_token_count ||
-                usage.prompt_token_count ||
+                usage.prompt_tokens ??
+                usage.input_tokens ??
+                tokenDetails?.prompt_token_count ??
+                usage.prompt_token_count ??
                 0
             )
 
             const candidatesBase = Number(
-                usage.completion_tokens ||
-                tokenDetails?.candidates_token_count ||
-                usage.candidates_token_count ||
+                usage.completion_tokens ??
+                usage.output_tokens ??
+                tokenDetails?.candidates_token_count ??
+                usage.candidates_token_count ??
                 0
             )
 
             const thoughts = Number(
-                tokenDetails?.thoughts_token_count ||
-                usage.thoughts_token_count ||
+                tokenDetails?.thoughts_token_count ??
+                usage.thoughts_token_count ??
                 0
             )
 
             // Calculate sums from details if available
-            const promptDetailsSum = (tokenDetails?.prompt_tokens_details && Array.isArray(tokenDetails.prompt_tokens_details))
-                ? tokenDetails.prompt_tokens_details.reduce((acc: number, d: any) => acc + Number(d.token_count || 0), 0)
-                : 0
+            // Note: OpenAI Responses API details are objects ({cache_write_tokens, cached_tokens}),
+            // Gemini details are arrays of {token_count}
+            const sumDetails = (details: any): number => {
+                if (Array.isArray(details)) {
+                    return details.reduce((acc: number, d: any) => acc + Number(d.token_count || 0), 0)
+                }
+                if (details && typeof details === 'object') {
+                    return Object.values(details).reduce((acc: number, v: any) => acc + Number(v || 0), 0)
+                }
+                return 0
+            }
 
-            const candidatesDetailsSum = (tokenDetails?.candidates_tokens_details && Array.isArray(tokenDetails.candidates_tokens_details))
-                ? tokenDetails.candidates_tokens_details.reduce((acc: number, d: any) => acc + Number(d.token_count || 0), 0)
-                : 0
+            const promptDetailsSum = sumDetails(tokenDetails?.prompt_tokens_details ?? usage.input_tokens_details)
+
+            const candidatesDetailsSum = sumDetails(tokenDetails?.candidates_tokens_details ?? usage.output_tokens_details)
 
             // Logic to determine if details are separate or included in base counts:
             // 1. If sum of details > base count, they are likely separate (e.g. nano banana case) -> SUM them.
