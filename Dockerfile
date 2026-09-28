@@ -14,8 +14,9 @@ RUN apk add --no-cache \
     netcat-openbsd \
     postgresql-client
 
-# 全局安装 pnpm (pinned to v9: pnpm v10+ blocks dependency build scripts
-# (prisma/esbuild) with ERR_PNPM_IGNORED_BUILDS and fails the install)
+# 全局安装 pnpm
+# pnpm pinned to v9: pnpm v10+ blocks dependency build scripts
+# (prisma/esbuild) with ERR_PNPM_IGNORED_BUILDS and fails the install
 RUN npm install -g pnpm@9 --registry=https://registry.npmmirror.com
 
 # 复制 package.json 和 pnpm-lock.yaml

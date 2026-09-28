@@ -1,0 +1,66 @@
+services:
+  app:
+    #    image: docker.io/variantconst/openwebui-monitor:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openwebui-monitor:local
+    ports:
+      - "7878:3000"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-openwebui}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-openwebui_monitor}
+      - TZ=Asia/Bangkok
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  db:
+    profiles:
+      - ${POSTGRES_HOST:+never}
+      - ${POSTGRES_HOST:-default}
+    image: postgres:15-alpine
+        #image: ankane/pgvector:v0.5.1-pg15
+    expose:
+      - "5432"
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-openwebui}
+      - POSTGRES_DB=${POSTGRES_DATABASE:-openwebui_monitor}
+    command: 
+      - "postgres"
+      - "-c"
+      - "log_min_duration_statement=5000"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  pgadmin4:
+    image: dpage/pgadmin4:latest
+    container_name: lobe-pgadmin
+    ports:
+      - '8084:80'
+      - '8043:443'
+    volumes:
+      - 'pgadmin_data:/var/lib/pgadmin'
+    environment:
+      - 'PGADMIN_DEFAULT_EMAIL=nattapon@pragma.co.th'
+      - 'PGADMIN_DEFAULT_PASSWORD=PG@support_125'
+    restart: always
+
+volumes:
+  postgres_data:
+  pgadmin_data:

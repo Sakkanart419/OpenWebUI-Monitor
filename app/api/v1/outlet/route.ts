@@ -120,10 +120,6 @@ export async function POST(req: Request) {
             const tokenDetails = usage.token_details
             
             // Base counts from standard fields
-            // Support multiple usage formats:
-            //  - OpenAI Chat Completions: prompt_tokens / completion_tokens
-            //  - OpenAI Responses API (gpt-5.x, newer models): input_tokens / output_tokens
-            //  - Gemini: token_details.prompt_token_count / candidates_token_count
             const promptBase = Number(
                 usage.prompt_tokens ??
                 usage.input_tokens ??
@@ -147,8 +143,8 @@ export async function POST(req: Request) {
             )
 
             // Calculate sums from details if available
-            // Note: OpenAI Responses API details are objects ({cache_write_tokens, cached_tokens}),
-            // Gemini details are arrays of {token_count}
+            // Details may be an array (Gemini: [{token_count}]) or an object
+            // (OpenAI Responses API: {cache_write_tokens, cached_tokens})
             const sumDetails = (details: any): number => {
                 if (Array.isArray(details)) {
                     return details.reduce((acc: number, d: any) => acc + Number(d.token_count || 0), 0)
