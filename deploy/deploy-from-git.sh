@@ -17,6 +17,10 @@ REPO="${REPO:-https://github.com/Sakkanart419/OpenWebUI-Monitor.git}"
 REF="${REF:-v0.3.9}"
 DIR="${DIR:-OpenWebUI-Monitor}"
 PORT="${PORT:-7878}"
+# compose project name: volume/container names follow THIS, not the folder name.
+# On an existing install, keep it identical to the current project (default: openwebui-monitor)
+# so the postgres_data volume is reused. A new install can use its own name.
+PROJECT="${COMPOSE_PROJECT:-openwebui-monitor}"
 
 cd "$(dirname "$0")/.." 2>/dev/null || true   # ถ้า script อยู่ใน repo แล้ว ให้รันจาก repo root ได้
 # NOTE: ถ้ารันครั้งแรก (ยังไม่มี repo) ตัว script จะ clone ไปที่ $DIR ใน working dir ปัจจุบัน
@@ -43,11 +47,11 @@ fi
 # ---------- 3. build (nohup-safe: รันผ่าน ssh ได้ ไม่ตายเมื่อหลุด) ----------
 echo "==> docker compose build (log: $DIR/build.log)"
 cd "$DIR"
-docker compose build app 2>&1 | tee build.log | tail -3
+docker compose -p "$PROJECT" build app 2>&1 | tee build.log | tail -3
 
 # ---------- 4. up ----------
-echo "==> docker compose up -d"
-docker compose up -d
+echo "==> docker compose up -d (project: $PROJECT)"
+docker compose -p "$PROJECT" up -d
 
 # ---------- 5. verify ----------
 echo "==> Waiting for app on :$PORT ..."
@@ -57,6 +61,6 @@ for i in $(seq 1 24); do
   sleep 5
 done
 echo "HTTP $code"
-VER=$(docker compose exec -T app grep -o '"version": *"[^"]*"' package.json || echo "?")
+VER=$(docker compose -p "$PROJECT" exec -T app grep -o '"version": *"[^"]*"' package.json || echo "?")
 echo "Deployed $VER @ $(git -C "$DIR" rev-parse --short HEAD) (ref $REF)"
 [ "$code" = "200" ] && echo "DEPLOY_OK" || { echo "DEPLOY_FAILED: app not responding"; exit 1; }
